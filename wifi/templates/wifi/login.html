@@ -1,0 +1,35 @@
+<h2>Welcome to {{ client.name }} WiFi</h2>
+<p>{{ client.instructions }}</p>
+<p><strong>Customer Care:</strong> {{ client.phone }}</p>
+
+<!-- Voucher Login -->
+<form method="post" action="{% url 'wifi_login' %}">
+  {% csrf_token %}
+  <input type="text" name="username" placeholder="Voucher Code" required>
+  <input type="password" name="password" placeholder="Password" required>
+  <button type="submit">Login</button>
+</form>
+
+<!-- Packages -->
+<h3>Available Packages</h3>
+{% for package in packages %}
+  <div>
+    <p>{{ package.name }} - {{ package.price }} KES - {{ package.duration_hours }} hrs</p>
+    <form method="post" action="{% url 'mpesa_payment' package.id %}">
+      {% csrf_token %}
+      <input type="text" name="phone_number" placeholder="Enter M-Pesa Number" required>
+      <button type="submit">Buy Now</button>
+    </form>
+  </div>
+{% endfor %}
+
+<div class="mt-4">
+  <h3>Activate Voucher</h3>
+  <form method="post" action="{% url 'activate_voucher' %}">
+    {% csrf_token %}
+    <input type="text" name="username" placeholder="Voucher Code" required>
+    <input type="password" name="password" placeholder="Voucher Password" required>
+    <input type="text" name="phone_number" placeholder="Phone Number" required>
+    <button type="submit">Activate Voucher</button>
+  </form>
+</div>

@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Client Dashboard</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+  <style>
+    body {
+      background-color: {{ primary_color }};
+    }
+  </style>
+</head>
+<body>
+
+<div class="container mt-4">
+  <h1>Welcome to Your Dashboard</h1>
+
+  <!-- Business Settings -->
+  <div class="card mb-3">
+    <div class="card-header">Business Settings</div>
+    <div class="card-body">
+      <p><strong>Customer Care:</strong> {{ customer_care }}</p>
+      <p><strong>Payment Instructions:</strong> {{ instructions }}</p>
+    </div>
+  </div>
+
+  <!-- Routers -->
+  <div class="card mb-3">
+    <div class="card-header">Routers</div>
+    <div class="card-body">
+      <form method="post" action="{% url 'client_add_router' %}">
+        {% csrf_token %}
+        <input type="text" name="name" placeholder="Router Name" required>
+        <input type="text" name="ip" placeholder="IP Address" required>
+        <button type="submit" class="btn btn-primary">Add Router</button>
+      </form>
+      <ul class="list-group mt-2">
+        {% for router in routers %}
+          <li class="list-group-item">
+            {{ router.name }} - {{ router.ip_address }} - 
+            {% if router.is_online %}✅ Online{% else %}❌ Offline{% endif %}
+          </li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+
+  <!-- Packages -->
+  <div class="card mb-3">
+    <div class="card-header">Packages</div>
+    <div class="card-body">
+      <form method="post" action="{% url 'client_add_package' %}">
+        {% csrf_token %}
+        <input type="text" name="name" placeholder="Package Name" required>
+        <input type="number" name="price" placeholder="Price (KES)" required>
+        <input type="number" name="duration" placeholder="Duration (Hours)" required>
+        <input type="number" name="devices" placeholder="Device Limit" required>
+        <button type="submit" class="btn btn-success">Add Package</button>
+      </form>
+      <table class="table mt-2">
+        <tr><th>Name</th><th>Price</th><th>Duration</th><th>Devices</th></tr>
+        {% for package in packages %}
+          <tr>
+            <td>{{ package.name }}</td>
+            <td>{{ package.price }} KES</td>
+            <td>{{ package.duration_hours }} hrs</td>
+            <td>{{ package.device_limit }}</td>
+          </tr>
+        {% endfor %}
+      </table>
+    </div>
+  </div>
+
+  <!-- Vouchers -->
+  <div class="card mb-3">
+    <div class="card-header">Voucher Generator</div>
+    <div class="card-body">
+      <form method="post" action="{% url 'generate_voucher' %}">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-warning">Generate Voucher</button>
+      </form>
+      <ul class="list-group mt-2">
+        {% for voucher in vouchers %}
+          <li class="list-group-item">
+            {{ voucher.username }} / {{ voucher.password }} - Expires {{ voucher.expiry }}
+          </li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+
+  <!-- Receipts -->
+  <div class="card mb-3">
+    <div class="card-header">Receipts</div>
+    <div class="card-body">
+      <ul class="list-group">
+        {% for receipt in receipts %}
+          <li class="list-group-item">
+            Code: {{ receipt.mpesa_code }} | Amount: {{ receipt.amount }} KES | 
+            Package: {{ receipt.package.name }} | Phone: {{ receipt.phone_number }} | 
+            Date: {{ receipt.created_at }}
+          </li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Router Dashboard</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+    <style>
+        body {
+            background-color: #f0f2f5;
+            font-family: Arial, sans-serif;
+        }
+        h1 {
+            color: #007bff;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        #map {
+            height: 400px;
+            margin-bottom: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+        .router-card {
+            background-color: #ffffff;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            transition: transform 0.2s;
+        }
+        .router-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 15px rgba(0,0,0,0.15);
+        }
+        .status-badge {
+            font-weight: bold;
+            padding: 5px 10px;
+            border-radius: 12px;
+            color: #fff;
+        }
+        .online {
+            background-color: #28a745;
+        }
+        .offline {
+            background-color: #dc3545;
+        }
+        .router-info p {
+            margin-bottom: 5px;
+        }
+    </style>
+</head>
+<body>
+<div class="container mt-4">
+    <h1>Router Dashboard</h1>
+
+    {% if routers %}
+        <!-- Map -->
+        <div id="map"></div>
+
+        <!-- Router Cards -->
+        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+        {% for router in routers %}
+            <div class="col">
+                <div class="router-card">
+                    <h5>{{ router.name }}</h5>
+                    <p>Status: 
+                        <span class="status-badge {% if router.status == 'online' %}online{% else %}offline{% endif %}">
+                            {{ router.status|title }}
+                        </span>
+                    </p>
+                    <p>Active Users: {{ router.users|length }}</p>
+                    <p>IP Address: {{ router.ip }}</p>
+                    <p>Coordinates: {{ router.latitude }}, {{ router.longitude }}</p>
+                </div>
+            </div>
+        {% endfor %}
+        </div>
+    {% else %}
+        <div class="alert alert-warning text-center mt-4">
+            No routers found.
+        </div>
+    {% endif %}
+</div>
+
+<!-- Leaflet JS -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+    {% if routers %}
+    // Initialize map
+    var map = L.map('map').setView([0, 0], 2); // world view initially
+
+    // Add OpenStreetMap tiles
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+
+    var bounds = [];
+
+    // Add router markers
+    {% for router in routers %}
+        var marker = L.marker([{{ router.latitude }}, {{ router.longitude }}], {
+            title: "{{ router.name }}",
+            icon: L.icon({
+                iconUrl: '{% if router.status == "online" %}https://cdn-icons-png.flaticon.com/512/190/190411.png{% else %}https://cdn-icons-png.flaticon.com/512/190/190406.png{% endif %}',
+                iconSize: [25, 25],
+            })
+        }).addTo(map)
+        .bindPopup("<b>{{ router.name }}</b><br>Status: {{ router.status|title }}<br>IP: {{ router.ip }}<br>Active Users: {{ router.users|length }}");
+        bounds.push([{{ router.latitude }}, {{ router.longitude }}]);
+    {% endfor %}
+
+    // Fit map to markers
+    if(bounds.length > 0){
+        map.fitBounds(bounds);
+    }
+    {% endif %}
+</script>
+</body>
+</html>
