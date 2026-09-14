@@ -1,35 +1,417 @@
-<h2>Welcome to {{ client.name }} WiFi</h2>
-<p>{{ client.instructions }}</p>
-<p><strong>Customer Care:</strong> {{ client.phone }}</p>
+<!DOCTYPE html>
+<html>
+<head>
+  <title>{{ client.wifi_name|default:client.name }} WiFi Login</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+  <style>
+    *, *::before, *::after {
+      box-sizing: border-box;
+    }
+    body {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+      overflow-x: hidden;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    .login-container {
+      background: white;
+      border-radius: 15px;
+      box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+      overflow: hidden;
+      max-width: 500px;
+      width: min(100%, 500px);
+    }
+    .login-header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 30px;
+      text-align: center;
+    }
+    .login-header h1 {
+      margin: 0;
+      font-weight: bold;
+      font-size: 28px;
+    }
+    .login-header p {
+      margin: 10px 0 0 0;
+      opacity: 0.9;
+      font-size: 14px;
+    }
+    .login-body {
+      padding: 26px;
+    }
+    .customer-info {
+      background: #f8f9fa;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 25px;
+    }
+    .customer-info p {
+      margin: 5px 0;
+      color: #555;
+      font-size: 14px;
+    }
+    .instructions-box {
+      background: #e7f3ff;
+      border-left: 4px solid #667eea;
+      padding: 15px;
+      border-radius: 5px;
+      margin-bottom: 25px;
+    }
+    .instructions-box p {
+      margin: 0;
+      color: #333;
+      font-size: 14px;
+    }
+    .form-section {
+      margin-bottom: 30px;
+    }
+    .form-section h3 {
+      font-size: 16px;
+      color: #333;
+      margin-bottom: 15px;
+      font-weight: bold;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .form-group {
+      margin-bottom: 15px;
+    }
+    .form-group label {
+      display: block;
+      margin-bottom: 6px;
+      color: #555;
+      font-size: 14px;
+      font-weight: 600;
+    }
+    .form-group input {
+      width: 100%;
+      padding: 10px;
+      border: 2px solid #e9ecef;
+      border-radius: 5px;
+      font-size: 14px;
+      transition: border-color 0.3s;
+    }
+    .form-group input:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+    .btn-primary-custom {
+      width: 100%;
+      padding: 12px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      border-radius: 5px;
+      font-size: 15px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+    .btn-primary-custom:hover {
+      transform: translateY(-2px);
+    }
+    .separator {
+      display: flex;
+      align-items: center;
+      margin: 20px 0;
+      color: #999;
+    }
+    .separator::before,
+    .separator::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: #ddd;
+    }
+    .separator span {
+      padding: 0 15px;
+      font-size: 14px;
+    }
+    .btn-secondary-custom {
+      width: 100%;
+      padding: 12px;
+      background: #6c757d;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      font-size: 15px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: transform 0.2s;
+      text-decoration: none;
+      display: block;
+      text-align: center;
+    }
+    .btn-secondary-custom:hover {
+      transform: translateY(-2px);
+      color: white;
+      text-decoration: none;
+    }
+    .tabs {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+    .tab-btn {
+      flex: 1;
+      padding: 10px;
+      background: #e9ecef;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-weight: 600;
+      color: #555;
+      transition: all 0.3s;
+    }
+    .tab-btn.active {
+      background: #667eea;
+      color: white;
+    }
+    .tab-content {
+      display: none;
+    }
+    .tab-content.active {
+      display: block;
+    }
+    .error-message {
+      background: #f8d7da;
+      color: #721c24;
+      padding: 12px;
+      border-radius: 5px;
+      margin-bottom: 15px;
+      display: none;
+    }
+    .buy-package {
+      display: block;
+      position: relative;
+      padding: 12px 42px 12px 14px;
+      margin-bottom: 10px;
+      border: 2px solid #e9ecef;
+      border-radius: 7px;
+      cursor: pointer;
+    }
+    .buy-package:hover,
+    .buy-package.selected {
+      border-color: #667eea;
+      background: #f0f4ff;
+    }
+    .buy-package input {
+      position: absolute;
+      right: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+    }
+    .buy-package-name {
+      display: block;
+      color: #333;
+      font-weight: 700;
+    }
+    .buy-package-meta {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      color: #666;
+      font-size: 13px;
+      flex-wrap: wrap;
+    }
 
-<!-- Voucher Login -->
-<form method="post" action="{% url 'wifi_login' %}">
-  {% csrf_token %}
-  <input type="text" name="username" placeholder="Voucher Code" required>
-  <input type="password" name="password" placeholder="Password" required>
-  <button type="submit">Login</button>
-</form>
+    @media (max-width: 576px) {
+      body {
+        padding: 10px;
+      }
 
-<!-- Packages -->
-<h3>Available Packages</h3>
-{% for package in packages %}
-  <div>
-    <p>{{ package.name }} - {{ package.price }} KES - {{ package.duration_hours }} hrs</p>
-    <form method="post" action="{% url 'mpesa_payment' package.id %}">
-      {% csrf_token %}
-      <input type="text" name="phone_number" placeholder="Enter M-Pesa Number" required>
-      <button type="submit">Buy Now</button>
-    </form>
+      .login-container {
+        width: min(100%, 360px);
+      }
+
+      .login-header {
+        padding: 22px 16px;
+      }
+
+      .login-header h1 {
+        font-size: 23px;
+      }
+
+      .login-body {
+        padding: 18px 14px;
+      }
+
+      .tabs {
+        gap: 6px;
+      }
+
+      .tab-btn {
+        min-width: 0;
+        padding: 9px 5px;
+        font-size: 12px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div class="login-container">
+  <!-- Header -->
+  <div class="login-header">
+    <h1>📶 {{ client.wifi_name|default:client.name }} WiFi</h1>
+    <p>Fast & Reliable Internet</p>
   </div>
-{% endfor %}
 
-<div class="mt-4">
-  <h3>Activate Voucher</h3>
-  <form method="post" action="{% url 'activate_voucher' %}">
-    {% csrf_token %}
-    <input type="text" name="username" placeholder="Voucher Code" required>
-    <input type="password" name="password" placeholder="Voucher Password" required>
-    <input type="text" name="phone_number" placeholder="Phone Number" required>
-    <button type="submit">Activate Voucher</button>
-  </form>
+  <!-- Body -->
+  <div class="login-body">
+    
+    <!-- Customer Info -->
+    {% if client.phone or client.instructions %}
+      <div class="customer-info">
+        {% if client.phone %}
+          <p><strong>📞 Customer Care:</strong> {{ client.phone }}</p>
+        {% endif %}
+        {% if client.instructions %}
+          <p><strong>ℹ️ Instructions:</strong> {{ client.instructions }}</p>
+        {% endif %}
+      </div>
+    {% endif %}
+
+    <!-- Tabs -->
+    <div class="tabs">
+      <button class="tab-btn" onclick="switchTab('login')">🔐 Login</button>
+      <button class="tab-btn" onclick="switchTab('voucher')">🎟️ Voucher</button>
+    </div>
+
+    <!-- Tab 1: Login -->
+    <div id="login" class="tab-content">
+      <div class="form-section">
+        <h3>🔐 Existing User Login</h3>
+        <p style="color: #666; font-size: 14px; margin-bottom: 15px;">Already have WiFi access? Enter your credentials below.</p>
+        
+        <form method="post" action="{% url 'wifi_login' %}">
+          {% csrf_token %}
+          <div class="form-group">
+            <label for="username">Phone Number / Username</label>
+            <input type="text" id="username" name="username" placeholder="e.g., 0712345678" required>
+          </div>
+          <div class="form-group">
+            <label for="password">Password</label>
+            <input type="password" id="password" name="password" placeholder="Enter password" required>
+          </div>
+          <input type="hidden" name="device_mac" class="device-mac-field">
+          <button type="submit" class="btn-primary-custom">🚀 Login</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Tab 2: Buy Pass -->
+    <div id="buy" class="tab-content active">
+      <div class="form-section">
+        <h3>🛒 Purchase WiFi Pass</h3>
+        <p style="color: #666; font-size: 14px; margin-bottom: 15px;">Select a package and complete payment to get instant access.</p>
+
+        {% if packages %}
+          <form method="post" action="{% url 'process_payment' %}" id="loginPurchaseForm">
+            {% csrf_token %}
+            {% for package in packages %}
+              <label class="buy-package" data-package-id="{{ package.id }}">
+                <span class="buy-package-name">{{ package.name }}</span>
+                <span class="buy-package-meta">
+                  <span>{{ package.duration_display }} · {{ package.device_limit }} device(s)</span>
+                  <strong>KES {{ package.price }}</strong>
+                </span>
+                <input type="radio" name="package" value="{{ package.id }}" required>
+              </label>
+            {% endfor %}
+            <div class="form-group">
+              <label for="purchase_phone">M-Pesa Number</label>
+              <input type="tel" id="purchase_phone" name="phone_number" placeholder="0712345678" required pattern="^254[0-9]{9}$|^0[0-9]{9}$">
+            </div>
+            <input type="hidden" name="device_mac" class="device-mac-field">
+            <input type="hidden" name="payment_method" value="mpesa">
+            <button type="submit" class="btn-primary-custom" id="loginPurchaseButton" disabled>Buy &amp; Prompt M-Pesa</button>
+          </form>
+        {% else %}
+          <p class="text-muted">No WiFi packages are available.</p>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Tab 3: Voucher -->
+    <div id="voucher" class="tab-content">
+      <div class="form-section">
+        <h3>🎟️ Activate Voucher</h3>
+        <p style="color: #666; font-size: 14px; margin-bottom: 15px;">Have a voucher? Use it to activate your WiFi access.</p>
+        
+        <form method="post" action="{% url 'activate_voucher' %}">
+          {% csrf_token %}
+          <div class="form-group">
+            <label for="voucher_code">Voucher Code</label>
+            <input type="text" id="voucher_code" name="username" placeholder="Enter voucher code" required>
+          </div>
+          <div class="form-group">
+            <label for="voucher_pass">Voucher Password</label>
+            <input type="password" id="voucher_pass" name="password" placeholder="Enter voucher password" required>
+          </div>
+          <div class="form-group">
+            <label for="voucher_phone">Phone Number</label>
+            <input type="tel" id="voucher_phone" name="phone_number" placeholder="e.g., 0712345678" required>
+          </div>
+          <button type="submit" class="btn-primary-custom">✅ Activate Voucher</button>
+        </form>
+      </div>
+    </div>
+
+  </div>
 </div>
+
+<script>
+  const portalParams = new URLSearchParams(window.location.search);
+  const portalMac = portalParams.get('mac') || portalParams.get('mac-address') || portalParams.get('client_mac') || '';
+  document.querySelectorAll('.device-mac-field').forEach(field => {
+    field.value = portalMac;
+  });
+
+  const purchaseForm = document.getElementById('loginPurchaseForm');
+  if (purchaseForm) {
+    const purchasePhone = document.getElementById('purchase_phone');
+    const purchaseButton = document.getElementById('loginPurchaseButton');
+    const packageCards = document.querySelectorAll('.buy-package');
+
+    function updatePurchaseButton() {
+      const packageSelected = purchaseForm.querySelector('input[name="package"]:checked');
+      purchaseButton.disabled = !packageSelected || !purchasePhone.value.trim();
+    }
+
+    packageCards.forEach(card => {
+      card.addEventListener('click', () => {
+        packageCards.forEach(item => item.classList.remove('selected'));
+        card.classList.add('selected');
+        updatePurchaseButton();
+      });
+    });
+    purchasePhone.addEventListener('input', updatePurchaseButton);
+  }
+
+  function switchTab(tabName) {
+    // Hide all tabs
+    document.querySelectorAll('.tab-content').forEach(el => {
+      el.classList.remove('active');
+    });
+    document.querySelectorAll('.tab-btn').forEach(el => {
+      el.classList.remove('active');
+    });
+
+    // Show selected tab
+    document.getElementById(tabName).classList.add('active');
+    event.target.classList.add('active');
+  }
+</script>
+
+</body>
+</html>
+

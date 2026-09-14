@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Card Payment</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+  <style>
+    *, *::before, *::after {
+      box-sizing: border-box;
+    }
+    body {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      padding: 20px;
+      overflow-x: hidden;
+    }
+    .payment-container {
+      background: white;
+      padding: 28px;
+      border-radius: 10px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+      max-width: 460px;
+      width: min(100%, 460px);
+    }
+    .payment-icon {
+      font-size: 50px;
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    h1 {
+      text-align: center;
+      color: #333;
+      margin-bottom: 10px;
+      font-weight: bold;
+    }
+    .subtitle {
+      text-align: center;
+      color: #666;
+      margin-bottom: 30px;
+      font-size: 14px;
+    }
+    .amount-box {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 20px;
+      border-radius: 8px;
+      text-align: center;
+      margin-bottom: 25px;
+    }
+    .amount-label {
+      font-size: 14px;
+      opacity: 0.9;
+    }
+    .amount-value {
+      font-size: 36px;
+      font-weight: bold;
+      margin-top: 5px;
+    }
+    .form-group {
+      margin-bottom: 20px;
+    }
+    .form-group label {
+      display: block;
+      margin-bottom: 8px;
+      color: #555;
+      font-weight: 600;
+      font-size: 14px;
+    }
+    .form-group input,
+    .form-group select {
+      width: 100%;
+      padding: 12px;
+      border: 2px solid #e9ecef;
+      border-radius: 5px;
+      font-size: 14px;
+      transition: border-color 0.3s;
+    }
+    .form-group input:focus,
+    .form-group select:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 15px;
+    }
+    .btn-pay {
+      width: 100%;
+      padding: 12px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      border-radius: 5px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: transform 0.2s;
+      margin-top: 10px;
+    }
+    .btn-pay:hover {
+      transform: translateY(-2px);
+    }
+    .btn-back {
+      width: 100%;
+      padding: 12px;
+      background: #6c757d;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: transform 0.2s;
+      margin-top: 10px;
+    }
+    .btn-back:hover {
+      transform: translateY(-2px);
+    }
+    .security-badge {
+      text-align: center;
+      margin-top: 20px;
+      padding-top: 20px;
+      border-top: 1px solid #e9ecef;
+      color: #999;
+      font-size: 12px;
+    }
+
+    @media (max-width: 576px) {
+      body { padding: 10px; }
+      .payment-container {
+        width: min(100%, 360px);
+        padding: 22px 16px;
+      }
+      .form-row { grid-template-columns: 1fr; gap: 0; }
+      .amount-value { font-size: 30px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="payment-container">
+  <div class="payment-icon">💳</div>
+  <h1>Credit/Debit Card Payment</h1>
+  <p class="subtitle">Secure payment for WiFi access</p>
+
+  <div class="amount-box">
+    <div class="amount-label">Total Amount</div>
+    <div class="amount-value">KES {{ package.price }}</div>
+  </div>
+
+  <form method="post" id="cardForm">
+    {% csrf_token %}
+    
+    <!-- Card Details -->
+    <div class="form-group">
+      <label for="card_number">Card Number</label>
+      <input type="text" id="card_number" name="card_number" placeholder="1234 5678 9012 3456" required>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label for="expiry">Expiry Date</label>
+        <input type="text" id="expiry" name="expiry" placeholder="MM/YY" required>
+      </div>
+      <div class="form-group">
+        <label for="cvv">CVV</label>
+        <input type="text" id="cvv" name="cvv" placeholder="123" required>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label for="cardholder">Cardholder Name</label>
+      <input type="text" id="cardholder" name="cardholder" placeholder="Full Name" required>
+    </div>
+
+    <!-- Billing Address -->
+    <div class="form-group">
+      <label for="country">Country</label>
+      <input type="text" id="country" name="country" placeholder="Country" value="Kenya" required>
+    </div>
+
+    <!-- Hidden fields -->
+    <input type="hidden" name="package" value="{{ package.id }}">
+    <input type="hidden" name="phone_number" value="{{ phone_number }}">
+    <input type="hidden" name="payment_method" value="card">
+
+    <button type="submit" class="btn-pay">💳 Process Payment</button>
+    <a href="{% url 'wifi_checkout' %}" class="btn-back" style="text-decoration: none; display: block;">← Back</a>
+  </form>
+
+  <div class="security-badge">
+    🔒 This is a secure connection. Your card information is encrypted.
+  </div>
+</div>
+
+<script>
+  // Card number formatting
+  document.getElementById('card_number').addEventListener('input', function(e) {
+    let value = e.target.value.replace(/\s/g, '');
+    let formattedValue = value.match(/.{1,4}/g)?.join(' ') || value;
+    e.target.value = formattedValue;
+  });
+
+  // Expiry date formatting
+  document.getElementById('expiry').addEventListener('input', function(e) {
+    let value = e.target.value.replace(/\D/g, '');
+    if (value.length >= 2) {
+      value = value.slice(0, 2) + '/' + value.slice(2, 4);
+    }
+    e.target.value = value;
+  });
+
+  // CVV formatting
+  document.getElementById('cvv').addEventListener('input', function(e) {
+    e.target.value = e.target.value.replace(/\D/g, '').slice(0, 3);
+  });
+</script>
+
+</body>
+</html>

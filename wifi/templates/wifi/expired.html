@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>WiFi Account Expired</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+  <style>
+    *, *::before, *::after {
+      box-sizing: border-box;
+    }
+    body {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      padding: 10px;
+      overflow-x: hidden;
+    }
+    .expired-container {
+      background: white;
+      padding: 28px;
+      border-radius: 10px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+      text-align: center;
+      width: min(100%, 460px);
+      max-width: 460px;
+    }
+    .expired-icon {
+      font-size: 60px;
+      color: #dc3545;
+      margin-bottom: 20px;
+    }
+    h1 {
+      color: #333;
+      margin-bottom: 15px;
+      font-weight: bold;
+    }
+    p {
+      color: #666;
+      margin-bottom: 25px;
+      font-size: 16px;
+    }
+    .btn-renew {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border: none;
+      padding: 12px 30px;
+      font-size: 16px;
+      text-decoration: none;
+      color: white;
+      border-radius: 5px;
+      display: inline-block;
+      margin-right: 10px;
+      transition: transform 0.2s;
+    }
+    .btn-renew:hover {
+      transform: translateY(-2px);
+      color: white;
+      text-decoration: none;
+    }
+    .btn-back {
+      background: #6c757d;
+      border: none;
+      padding: 12px 30px;
+      font-size: 16px;
+      text-decoration: none;
+      color: white;
+      border-radius: 5px;
+      display: inline-block;
+      transition: transform 0.2s;
+    }
+    .btn-back:hover {
+      transform: translateY(-2px);
+      color: white;
+      text-decoration: none;
+    }
+
+    @media (max-width: 576px) {
+      .expired-container {
+        padding: 22px 14px;
+      }
+      .expired-container > div:last-child {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+      .btn-renew, .btn-back {
+        width: 100%;
+        margin: 0;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div class="expired-container">
+  <div class="expired-icon">⏰</div>
+  <h1>WiFi Account Expired</h1>
+  <p>Your WiFi subscription has expired. Please renew your account to continue using the service.</p>
+  
+  <div>
+    <a href="{% url 'wifi_login' %}" class="btn-renew">Purchase WiFi Pass</a>
+    <a href="{% url 'wifi_login' %}" class="btn-back">Back to Login</a>
+  </div>
+</div>
+
+</body>
+</html>

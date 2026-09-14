@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>WiFi Purchase</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+  <style>
+    *, *::before, *::after {
+      box-sizing: border-box;
+    }
+    body {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 24px 16px;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow-x: hidden;
+    }
+    .checkout-container {
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+      overflow: hidden;
+      width: min(100%, 460px);
+      max-width: 460px;
+      margin: 0 auto;
+    }
+    .checkout-header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 30px;
+      text-align: center;
+    }
+    .checkout-header h1 {
+      margin: 0;
+      font-weight: bold;
+      font-size: 28px;
+    }
+    .checkout-body {
+      padding: 28px 22px;
+    }
+    .package-card {
+      border: 2px solid #e9ecef;
+      border-radius: 8px;
+      padding: 18px 18px 18px 16px;
+      margin-bottom: 15px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      position: relative;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+    }
+    .package-card:hover {
+      border-color: #667eea;
+      box-shadow: 0 4px 15px rgba(102, 126, 234, 0.2);
+      transform: translateY(-2px);
+    }
+    .package-card.selected {
+      border-color: #667eea;
+      background-color: #f0f4ff;
+      box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    }
+    .package-info {
+      flex: 1;
+      min-width: 0;
+    }
+    .package-name {
+      font-size: 18px;
+      font-weight: bold;
+      color: #333;
+      margin-bottom: 8px;
+    }
+    .package-details {
+      display: flex;
+      gap: 12px;
+      color: #666;
+      font-size: 14px;
+      flex-wrap: wrap;
+    }
+    .package-price {
+      font-size: 22px;
+      font-weight: bold;
+      color: #667eea;
+      min-width: 82px;
+      text-align: right;
+      line-height: 1.2;
+    }
+    .package-radio {
+      position: absolute;
+      right: 20px;
+      top: 20px;
+      width: 20px;
+      height: 20px;
+      cursor: pointer;
+    }
+    .form-section {
+      margin-top: 30px;
+      padding-top: 30px;
+      border-top: 2px solid #e9ecef;
+    }
+    .form-section h3 {
+      color: #333;
+      margin-bottom: 20px;
+      font-weight: bold;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .form-group {
+      margin-bottom: 20px;
+    }
+    .form-group label {
+      display: block;
+      margin-bottom: 8px;
+      color: #555;
+      font-weight: 600;
+      font-size: 14px;
+    }
+    .form-group input {
+      width: 100%;
+      padding: 12px;
+      border: 2px solid #e9ecef;
+      border-radius: 5px;
+      font-size: 16px;
+      transition: border-color 0.3s;
+    }
+    .form-group input:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+    .total-box {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 20px;
+      border-radius: 8px;
+      margin-bottom: 25px;
+      text-align: center;
+    }
+    .total-label {
+      font-size: 13px;
+      opacity: 0.9;
+      margin-bottom: 8px;
+    }
+    .total-amount {
+      font-size: 36px;
+      font-weight: bold;
+    }
+    .checkout-footer {
+      display: flex;
+      gap: 10px;
+      justify-content: space-between;
+      padding: 20px 0;
+      align-items: stretch;
+    }
+    .btn-checkout {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border: none;
+      padding: 14px 20px;
+      font-size: 16px;
+      font-weight: bold;
+      color: white;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: transform 0.2s;
+      flex: 1;
+      min-width: 0;
+    }
+    .btn-checkout:hover:not(:disabled) {
+      transform: translateY(-2px);
+      color: white;
+      text-decoration: none;
+    }
+    .btn-checkout:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    .btn-back {
+      background: #6c757d;
+      border: none;
+      padding: 14px 18px;
+      font-size: 16px;
+      font-weight: bold;
+      color: white;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: transform 0.2s;
+      text-decoration: none;
+      white-space: nowrap;
+    }
+    .btn-back:hover {
+      transform: translateY(-2px);
+      color: white;
+    }
+    .info-box {
+      background: #e7f3ff;
+      border-left: 4px solid #667eea;
+      padding: 15px;
+      border-radius: 5px;
+      font-size: 14px;
+      color: #004085;
+      margin-bottom: 25px;
+    }
+    .no-packages {
+      text-align: center;
+      padding: 40px 20px;
+      color: #666;
+    }
+    .no-packages p {
+      font-size: 16px;
+      margin-bottom: 0;
+    }
+
+    @media (max-width: 576px) {
+      body {
+        padding: 12px 10px;
+      }
+
+      .checkout-container {
+        width: min(100%, 360px);
+        max-width: 360px;
+      }
+
+      .checkout-header {
+        padding: 22px 18px;
+      }
+
+      .checkout-header h1 {
+        font-size: 24px;
+      }
+
+      .checkout-body {
+        padding: 20px 14px;
+      }
+
+      .package-card {
+        padding: 16px 14px 14px 12px;
+        align-items: flex-start;
+      }
+
+      .package-details {
+        gap: 6px;
+        font-size: 12px;
+      }
+
+      .package-price {
+        font-size: 18px;
+        min-width: 72px;
+      }
+
+      .checkout-footer {
+        flex-direction: column;
+      }
+
+      .btn-back,
+      .btn-checkout {
+        width: 100%;
+        text-align: center;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div class="checkout-container">
+  <div class="checkout-header">
+    <h1>🛒 Buy WiFi Pass</h1>
+  </div>
+
+  <div class="checkout-body">
+    {% if packages %}
+      <form method="post" id="checkoutForm" action="{% url 'process_payment' %}">
+        {% csrf_token %}
+        
+        <!-- Package Selection -->
+        <div class="packages-section">
+          <h3 style="color: #333; margin-bottom: 15px; font-weight: bold;">📦 Select Package</h3>
+          
+          {% for package in packages %}
+            <label class="package-card" id="package-{{ package.id }}" data-price="{{ package.price }}">
+              <div class="package-info">
+                <div class="package-name">{{ package.name }}</div>
+                <div class="package-details">
+                  <span>⏱️ {{ package.duration_display }}</span>
+                  <span>📱 {{ package.device_limit }} device</span>
+                </div>
+              </div>
+              <div class="package-price">KES {{ package.price }}</div>
+              <input type="radio" name="package" value="{{ package.id }}" class="package-radio" required>
+            </label>
+          {% endfor %}
+        </div>
+
+        <!-- M-Pesa Number -->
+        <div class="form-section">
+          <h3>📱 M-Pesa Number</h3>
+          <div class="info-box">
+            💡 Enter your M-Pesa number. You'll receive a prompt on your phone to enter your M-Pesa PIN.
+          </div>
+          
+          <div class="form-group">
+            <label for="phone">Phone Number *</label>
+            <input type="tel" id="phone" name="phone_number" placeholder="0712345678" required pattern="^254[0-9]{9}$|^0[0-9]{9}$">
+          </div>
+          <input type="hidden" id="device_mac" name="device_mac">
+        </div>
+
+        <!-- Hidden field for payment method -->
+        <input type="hidden" name="payment_method" value="mpesa">
+
+        <!-- Total -->
+        <div class="total-box">
+          <div class="total-label">Total Amount</div>
+          <div class="total-amount" id="totalAmount">KES 0</div>
+        </div>
+
+        <div class="checkout-footer">
+          <a href="{% url 'wifi_login' %}" class="btn-back">← Back</a>
+          <button type="submit" class="btn-checkout" id="checkoutBtn" disabled>Buy &amp; Prompt M-Pesa</button>
+        </div>
+      </form>
+
+      <script>
+        // MikroTik can provide the real client MAC in the captive-portal URL.
+        const deviceMacInput = document.getElementById('device_mac');
+        const portalParams = new URLSearchParams(window.location.search);
+        deviceMacInput.value = portalParams.get('mac') ||
+          portalParams.get('mac-address') ||
+          portalParams.get('client_mac') || '';
+
+        // Update total and enable button when package is selected
+        document.querySelectorAll('input[name="package"]').forEach(radio => {
+          radio.addEventListener('change', function() {
+            const card = document.getElementById('package-' + this.value);
+            document.querySelectorAll('.package-card').forEach(c => c.classList.remove('selected'));
+            card.classList.add('selected');
+
+            const price = Number(card.dataset.price || 0);
+            document.getElementById('totalAmount').textContent = 'KES ' + price.toFixed(2);
+
+            // Enable submit button when the package and phone number are filled
+            updateSubmitButton();
+          });
+        });
+
+        // Update button state when phone is filled
+        document.getElementById('phone').addEventListener('input', function() {
+          updateSubmitButton();
+        });
+
+        function updateSubmitButton() {
+          const phone = document.getElementById('phone').value.trim();
+          const deviceMac = document.getElementById('device_mac').value.trim();
+          const packageSelected = document.querySelector('input[name="package"]:checked');
+          const btn = document.getElementById('checkoutBtn');
+          
+          if (phone && packageSelected) {
+            btn.disabled = false;
+          } else {
+            btn.disabled = true;
+          }
+        }
+
+        // Form submission
+        document.getElementById('checkoutForm').addEventListener('submit', function(e) {
+          e.preventDefault();
+          const phone = document.getElementById('phone').value.trim();
+          const deviceMac = document.getElementById('device_mac').value.trim();
+          const package_id = document.querySelector('input[name="package"]:checked').value;
+
+          if (!phone || !package_id) {
+            alert('Please select a package and enter your phone number');
+            return;
+          }
+
+          // Normalize phone number
+          let normalizedPhone = phone;
+          if (phone.startsWith('0')) {
+            normalizedPhone = '254' + phone.substring(1);
+          } else if (!phone.startsWith('254')) {
+            normalizedPhone = '254' + phone;
+          }
+          
+          document.getElementById('phone').value = normalizedPhone;
+          this.submit();
+        });
+      </script>
+    {% else %}
+      <div class="no-packages">
+        <p>😔 No WiFi packages available at the moment.</p>
+        <p>Please contact support for more information.</p>
+        <a href="{% url 'wifi_login' %}" style="margin-top: 20px; display: inline-block;" class="btn-back">Back to Login</a>
+      </div>
+    {% endif %}
+  </div>
+</div>
+
+</body>
+</html>

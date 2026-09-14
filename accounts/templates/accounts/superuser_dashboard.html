@@ -1,20 +1,140 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Superuser Dashboard</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+  <style>
+    body {
+      background: linear-gradient(135deg, #f4f7fb 0%, #ebf0ff 100%);
+      font-family: Arial, sans-serif;
+    }
+    .topbar {
+      background: #111827;
+      color: white;
+      padding: 18px 24px;
+      border-radius: 16px;
+      margin-bottom: 24px;
+      box-shadow: 0 10px 25px rgba(17, 24, 39, 0.12);
+    }
+    .stat-card {
+      background: rgba(255,255,255,0.9);
+      border: 1px solid rgba(148,163,184,0.2);
+      border-radius: 16px;
+      padding: 18px;
+      box-shadow: 0 8px 20px rgba(15, 23, 42, 0.05);
+    }
+    .section-card {
+      background: white;
+      border: 1px solid rgba(148,163,184,0.2);
+      border-radius: 16px;
+      box-shadow: 0 8px 20px rgba(15, 23, 42, 0.06);
+      overflow: hidden;
+    }
+    .section-card .card-header {
+      background: #f8fafc;
+      border-bottom: 1px solid rgba(148,163,184,0.2);
+      font-weight: 700;
+      padding: 14px 18px;
+    }
+    .section-card .card-body {
+      padding: 18px;
+    }
+    .client-row {
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      padding: 15px;
+      background: #fafcff;
+      margin-bottom: 12px;
+    }
+    .status-badge {
+      display: inline-block;
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+    }
+    .status-active {
+      background: #dcfce7;
+      color: #166534;
+    }
+    .status-inactive {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+    .btn-compact {
+      padding: 6px 10px;
+      font-size: 12px;
+      border-radius: 8px;
+    }
+    .form-control, .form-select {
+      border-radius: 10px;
+      border: 1px solid #dbe2f0;
+      padding: 10px 12px;
+    }
+    .list-group-item {
+      border-radius: 10px;
+      margin-bottom: 6px;
+      border: 1px solid #edf2f7;
+    }
+    .danger-box {
+      border-left: 4px solid #dc2626;
+      background: #fff5f5;
+      color: #7f1d1d;
+      border-radius: 10px;
+      padding: 12px 14px;
+      margin-bottom: 12px;
+    }
+  </style>
 </head>
-<body class="bg-light">
-<div class="container mt-4">
-  <div class="d-flex justify-content-between align-items-center mb-4">
-    <h1>Superuser Dashboard</h1>
-    <a class="btn btn-secondary" href="{% url 'logout' %}">Logout</a>
+<body>
+<div class="container py-4">
+  <div class="topbar d-flex justify-content-between align-items-center">
+    <div>
+      <h1 class="mb-0 h3">Superuser Dashboard</h1>
+      <small class="text-light opacity-75">Operations center for clients, routers, packages and payments</small>
+    </div>
+    <a class="btn btn-outline-light" href="{% url 'logout' %}">Logout</a>
   </div>
 
-  <div class="row gy-4">
+  <div class="row g-3 mb-4">
+    <div class="col-md-3">
+      <div class="stat-card">
+        <div class="text-muted small">Total clients</div>
+        <div class="display-6 fw-bold">{{ clients|length }}</div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="stat-card">
+        <div class="text-muted small">Active</div>
+        <div class="display-6 fw-bold text-success">{{ active_clients }}</div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="stat-card">
+        <div class="text-muted small">Inactive</div>
+        <div class="display-6 fw-bold text-danger">{{ pending_payments }}</div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="stat-card">
+        <div class="text-muted small">Packages</div>
+        <div class="display-6 fw-bold text-primary">{{ total_packages }}</div>
+      </div>
+    </div>
+  </div>
+
+  {% if inactive_clients %}
+    <div class="danger-box">
+      <strong>Payment review:</strong> {{ inactive_clients|length }} client account(s) are currently inactive and may need connection fee follow-up.
+    </div>
+  {% endif %}
+
+  <div class="row g-4">
     <div class="col-lg-6">
-      <div class="card">
-        <div class="card-header">Clients</div>
+      <div class="section-card">
+        <div class="card-header">Create client</div>
         <div class="card-body">
           <form method="post">
             {% csrf_token %}
@@ -23,24 +143,91 @@
             <div class="mb-2"><input class="form-control" type="password" name="password" placeholder="Password" required></div>
             <div class="mb-2"><input class="form-control" name="name" placeholder="Client Name" required></div>
             <div class="mb-2"><input class="form-control" name="phone" placeholder="Phone" required></div>
-            <button class="btn btn-primary">Create Client</button>
+            <button class="btn btn-primary w-100">Create Client</button>
           </form>
-          <ul class="list-group list-group-flush mt-3">
-            {% for client in clients %}
-              <li class="list-group-item">{{ client.name }} ({{ client.user.username }})</li>
-            {% empty %}
-              <li class="list-group-item">No clients found.</li>
-            {% endfor %}
-          </ul>
         </div>
       </div>
     </div>
 
     <div class="col-lg-6">
-      <div class="card">
+      <div class="section-card">
+        <div class="card-header">Quick help</div>
+        <div class="card-body">
+          <ul class="mb-0 ps-3">
+            <li>Use the client list to edit details, reset passwords and activate/inactivate accounts.</li>
+            <li>Mark inactive accounts when a client fails the connection fee or payment requirement.</li>
+            <li>Delete packages, routers or accounts if they are no longer in use.</li>
+            <li>Use vouchers to give guest or temporary WiFi access.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-12">
+      <div class="section-card">
+        <div class="card-header">Clients</div>
+        <div class="card-body">
+          {% for client in clients %}
+            <div class="client-row">
+              <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+                <div>
+                  <h5 class="mb-1">{{ client.name }}</h5>
+                  <div class="text-muted small">{{ client.user.username }} • {{ client.phone }}</div>
+                </div>
+                <span class="status-badge {% if client.user.is_active %}status-active{% else %}status-inactive{% endif %}">
+                  {% if client.user.is_active %}Active{% else %}Inactive{% endif %}
+                </span>
+              </div>
+
+              <form method="post" class="row g-2">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="edit_client">
+                <input type="hidden" name="client_id" value="{{ client.id }}">
+                <div class="col-md-3"><input class="form-control" name="client_name" value="{{ client.name }}"></div>
+                <div class="col-md-2"><input class="form-control" name="client_phone" value="{{ client.phone }}"></div>
+                <div class="col-md-3"><input class="form-control" name="wifi_name" value="{{ client.wifi_name }}" placeholder="WiFi Name"></div>
+                <div class="col-md-2"><input class="form-control" name="billing_info" value="{{ client.billing_info }}" placeholder="Billing info"></div>
+                <div class="col-md-2"><button class="btn btn-primary btn-compact w-100" type="submit">Save</button></div>
+              </form>
+
+              <div class="d-flex flex-wrap gap-2 mt-3">
+                <form method="post" class="d-inline">
+                  {% csrf_token %}
+                  <input type="hidden" name="action" value="toggle_client_active">
+                  <input type="hidden" name="client_id" value="{{ client.id }}">
+                  <button type="submit" class="btn btn-outline-secondary btn-compact">
+                    {% if client.user.is_active %}Deactivate{% else %}Activate{% endif %}
+                  </button>
+                </form>
+
+                <form method="post" class="d-inline">
+                  {% csrf_token %}
+                  <input type="hidden" name="action" value="reset_client_password">
+                  <input type="hidden" name="client_id" value="{{ client.id }}">
+                  <input type="text" class="form-control form-control-sm d-inline-block" name="new_password" placeholder="New password" style="max-width: 180px;">
+                  <button type="submit" class="btn btn-warning btn-compact">Reset</button>
+                </form>
+
+                <form method="post" class="d-inline">
+                  {% csrf_token %}
+                  <input type="hidden" name="action" value="delete_client">
+                  <input type="hidden" name="client_id" value="{{ client.id }}">
+                  <button type="submit" class="btn btn-outline-danger btn-compact" onclick="return confirm('Delete this client and account permanently?');">Delete</button>
+                </form>
+              </div>
+            </div>
+          {% empty %}
+            <div class="alert alert-light border mb-0">No clients found yet.</div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-6">
+      <div class="section-card">
         <div class="card-header">Routers</div>
         <div class="card-body">
-          <form method="post">
+          <form method="post" class="mb-3">
             {% csrf_token %}
             <input type="hidden" name="action" value="add_router">
             <div class="mb-2">
@@ -59,17 +246,35 @@
               <div class="col"><input class="form-control" name="latitude" placeholder="Latitude"></div>
               <div class="col"><input class="form-control" name="longitude" placeholder="Longitude"></div>
             </div>
-            <button class="btn btn-primary mt-2">Add Router</button>
+            <button class="btn btn-primary mt-2 w-100">Add Router</button>
           </form>
+
+          {% if routers %}
+            <ul class="list-group list-group-flush">
+              {% for router in routers %}
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                  <span>{{ router.name }} • {{ router.ip_address }}</span>
+                  <form method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="delete_router">
+                    <input type="hidden" name="router_id" value="{{ router.id }}">
+                    <button type="submit" class="btn btn-outline-danger btn-compact">Delete</button>
+                  </form>
+                </li>
+              {% endfor %}
+            </ul>
+          {% else %}
+            <div class="alert alert-light border mb-0">No routers yet.</div>
+          {% endif %}
         </div>
       </div>
     </div>
 
     <div class="col-lg-6">
-      <div class="card">
+      <div class="section-card">
         <div class="card-header">Packages</div>
         <div class="card-body">
-          <form method="post">
+          <form method="post" class="mb-3">
             {% csrf_token %}
             <input type="hidden" name="action" value="add_package">
             <div class="mb-2">
@@ -82,17 +287,46 @@
             </div>
             <div class="mb-2"><input class="form-control" name="package_name" placeholder="Package Name" required></div>
             <div class="mb-2"><input class="form-control" name="package_price" placeholder="Price" required></div>
-            <div class="mb-2"><input class="form-control" name="package_duration" placeholder="Duration Hours" required></div>
-            <div class="mb-2"><input class="form-control" name="package_devices" placeholder="Device Limit" required></div>
-            <button class="btn btn-success">Add Package</button>
+            <div class="row g-2">
+              <div class="col-7"><input class="form-control" name="package_duration" placeholder="30" required></div>
+              <div class="col-5">
+                <select class="form-select" name="duration_unit">
+                  <option value="minutes" selected>Minutes</option>
+                  <option value="hours">Hours</option>
+                </select>
+              </div>
+            </div>
+            <div class="mb-2 mt-2"><input class="form-control" name="package_devices" placeholder="Device Limit" required></div>
+            <button class="btn btn-success w-100">Add Package</button>
           </form>
+
+          {% if packages %}
+            <div class="list-group">
+              {% for package in packages %}
+                <div class="list-group-item d-flex justify-content-between align-items-center gap-2">
+                  <div>
+                    <strong>{{ package.name }}</strong><br>
+                    <small>{{ package.price }} KES • {{ package.duration_display }} • {{ package.device_limit }} devices</small>
+                  </div>
+                  <form method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="delete_package">
+                    <input type="hidden" name="package_id" value="{{ package.id }}">
+                    <button type="submit" class="btn btn-outline-danger btn-compact">Delete</button>
+                  </form>
+                </div>
+              {% endfor %}
+            </div>
+          {% else %}
+            <div class="alert alert-light border mb-0">No packages configured yet.</div>
+          {% endif %}
         </div>
       </div>
     </div>
 
     <div class="col-lg-6">
-      <div class="card">
-        <div class="card-header">Voucher Generator</div>
+      <div class="section-card">
+        <div class="card-header">Create voucher</div>
         <div class="card-body">
           <form method="post">
             {% csrf_token %}
@@ -105,7 +339,7 @@
                 {% endfor %}
               </select>
             </div>
-            <button class="btn btn-warning">Generate Voucher</button>
+            <button class="btn btn-warning w-100">Generate Voucher</button>
           </form>
           <ul class="list-group list-group-flush mt-3">
             {% for voucher in vouchers %}
@@ -118,12 +352,12 @@
       </div>
     </div>
 
-    <div class="col-12">
-      <div class="card">
+    <div class="col-lg-6">
+      <div class="section-card">
         <div class="card-header">Receipts</div>
         <div class="card-body">
           <div class="table-responsive">
-            <table class="table table-bordered">
+            <table class="table table-bordered mb-0">
               <thead>
                 <tr>
                   <th>Code</th>
@@ -138,13 +372,7 @@
                   <tr>
                     <td>{{ receipt.mpesa_code }}</td>
                     <td>{{ receipt.amount }}</td>
-                    <td>
-                      {% if receipt.package %}
-                        {{ receipt.package.name }}
-                      {% else %}
-                        N/A
-                      {% endif %}
-                    </td>
+                    <td>{% if receipt.package %}{{ receipt.package.name }}{% else %}N/A{% endif %}</td>
                     <td>{{ receipt.phone_number }}</td>
                     <td>{{ receipt.created_at }}</td>
                   </tr>
@@ -157,7 +385,6 @@
         </div>
       </div>
     </div>
-  </div>
   </div>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>

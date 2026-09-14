@@ -11,6 +11,19 @@ class User(AbstractUser):
 class Client(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="client")
     name = models.CharField(max_length=100)
+    wifi_name = models.CharField(max_length=100, blank=True, default="")
     phone = models.CharField(max_length=20)
     instructions = models.TextField(blank=True, null=True)
-    primary_color = models.CharField(max_length=7, default="#007bff")  # Default to Bootstrap primary color
+    primary_color = models.CharField(max_length=7, default="#007bff")
+    logo = models.CharField(max_length=255, blank=True, default="")
+    billing_info = models.TextField(blank=True, default="")
+
+    mpesa_shortcode = models.CharField(max_length=20, blank=True, default="174379")
+    mpesa_consumer_key = models.CharField(max_length=255, blank=True, default="")
+    mpesa_consumer_secret = models.CharField(max_length=255, blank=True, default="")
+    mpesa_passkey = models.CharField(max_length=255, blank=True, default="")
+    mpesa_callback_url = models.URLField(blank=True, default="")
+    mpesa_environment = models.CharField(max_length=20, default="sandbox")
+
+    def __str__(self):
+        return self.name

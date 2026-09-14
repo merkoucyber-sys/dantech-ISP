@@ -29,3 +29,49 @@ def get_router_status(ip, username, password):
         return users, 'online'
     except:
         return [], 'offline'
+
+
+def enforce_wifi_account(router, wifi_user):
+    """Create or update a MikroTik hotspot account with one-device access."""
+    if connect is None:
+        return False, 'librouteros is not installed'
+    if not router.api_username or not router.api_password or not wifi_user.device_mac:
+        return False, 'Router credentials or device MAC is missing'
+
+    try:
+        api = connect(
+            username=router.api_username,
+            password=router.api_password,
+            host=router.ip_address,
+        )
+        users = api.get_resource('/ip/hotspot/user')
+        existing_users = list(users.get(name=wifi_user.username))
+        fields = {
+            'name': wifi_user.username,
+            'password': wifi_user.password,
+            'mac-address': wifi_user.device_mac,
+            'shared-users': '1',
+        }
+
+        if existing_users:
+            users.set(id=existing_users[0]['id'], **fields)
+        else:
+            users.add(**fields)
+        return True, 'enforced'
+    except Exception as error:
+        return False, str(error)
+
+
+def enforce_wifi_account_on_client_routers(wifi_user):
+    """Apply one-device hotspot enforcement to every configured client router."""
+    routers = list(wifi_user.client.routers.all())
+    if not routers:
+        return True, []
+
+    results = []
+    all_successful = True
+    for router in routers:
+        success, message = enforce_wifi_account(router, wifi_user)
+        results.append((router, success, message))
+        all_successful = all_successful and success
+    return all_successful, results
