@@ -280,6 +280,38 @@ class ClientDashboardTests(TestCase):
         self.assertEqual(client.mpesa_consumer_key, 'demo-key')
         self.assertEqual(client.mpesa_environment, 'sandbox')
 
+    def test_client_can_save_billing_destination_and_daraja_settings(self):
+        User = get_user_model()
+        user = User.objects.create_user(username='billing-owner', password='secret123', is_client=True)
+        client = Client.objects.create(user=user, name='Billing Client', phone='0712345678')
+
+        self.client.force_login(user)
+        page = self.client.get(reverse('billing_settings'))
+        self.assertEqual(page.status_code, 200)
+        self.assertTemplateUsed(page, 'client/billing.html')
+
+        response = self.client.post(reverse('billing_settings'), {
+            'billing_account_type': 'paybill',
+            'paybill_number': '123456',
+            'paybill_account_number': 'WIFI-ACCOUNT',
+            'mpesa_shortcode': '123456',
+            'mpesa_consumer_key': 'consumer-key',
+            'mpesa_consumer_secret': 'consumer-secret',
+            'mpesa_passkey': 'passkey',
+            'mpesa_environment': 'production',
+            'mpesa_callback_url': 'https://example.com/wifi/mpesa-callback/',
+            'mpesa_validation_url': 'https://example.com/wifi/daraja/validation/',
+            'mpesa_confirmation_url': 'https://example.com/wifi/daraja/confirmation/',
+        })
+
+        self.assertRedirects(response, reverse('billing_settings'))
+        client.refresh_from_db()
+        self.assertEqual(client.billing_account_type, 'paybill')
+        self.assertEqual(client.paybill_number, '123456')
+        self.assertEqual(client.paybill_account_number, 'WIFI-ACCOUNT')
+        self.assertEqual(client.mpesa_consumer_secret, 'consumer-secret')
+        self.assertEqual(client.mpesa_confirmation_url, 'https://example.com/wifi/daraja/confirmation/')
+
     def test_wifi_login_rejects_unexpected_device_mac(self):
         User = get_user_model()
         user = User.objects.create_user(username='mac-owner', password='secret123', is_client=True)

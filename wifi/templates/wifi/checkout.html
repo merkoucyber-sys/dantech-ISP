@@ -289,7 +289,7 @@
                 </div>
               </div>
               <div class="package-price">KES {{ package.price }}</div>
-              <input type="radio" name="package" value="{{ package.id }}" class="package-radio" required>
+              <input type="radio" name="package" value="{{ package.id }}" class="package-radio" required {% if selected_package_id == package.id|stringformat:'s' %}checked{% endif %}>
             </label>
           {% endfor %}
         </div>

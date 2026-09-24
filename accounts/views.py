@@ -138,18 +138,12 @@ def superuser_dashboard(request):
         if action == 'add_router':
             client_id = request.POST.get('client_id')
             name = request.POST.get('router_name', '').strip()
-            ip = request.POST.get('router_ip', '').strip()
-            if client_id and name and ip:
+            if client_id and name:
                 client = Client.objects.filter(id=client_id).first()
                 if client:
                     Router.objects.create(
                         client=client,
                         name=name,
-                        ip_address=ip,
-                        api_username=request.POST.get('router_username', '').strip(),
-                        api_password=request.POST.get('router_password', '').strip(),
-                        latitude=float(request.POST.get('latitude') or 0.0),
-                        longitude=float(request.POST.get('longitude') or 0.0),
                         status='offline',
                     )
             return redirect('superuser_dashboard')

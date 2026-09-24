@@ -239,13 +239,6 @@
               </select>
             </div>
             <div class="mb-2"><input class="form-control" name="router_name" placeholder="Router Name" required></div>
-            <div class="mb-2"><input class="form-control" name="router_ip" placeholder="IP Address" required></div>
-            <div class="mb-2"><input class="form-control" name="router_username" placeholder="API Username"></div>
-            <div class="mb-2"><input class="form-control" name="router_password" placeholder="API Password"></div>
-            <div class="row gx-2">
-              <div class="col"><input class="form-control" name="latitude" placeholder="Latitude"></div>
-              <div class="col"><input class="form-control" name="longitude" placeholder="Longitude"></div>
-            </div>
             <button class="btn btn-primary mt-2 w-100">Add Router</button>
           </form>
 
@@ -253,13 +246,16 @@
             <ul class="list-group list-group-flush">
               {% for router in routers %}
                 <li class="list-group-item d-flex justify-content-between align-items-center">
-                  <span>{{ router.name }} • {{ router.ip_address }}</span>
-                  <form method="post">
-                    {% csrf_token %}
-                    <input type="hidden" name="action" value="delete_router">
-                    <input type="hidden" name="router_id" value="{{ router.id }}">
-                    <button type="submit" class="btn btn-outline-danger btn-compact">Delete</button>
-                  </form>
+                  <span>{{ router.name }} • {% if router.last_seen %}connected{% else %}not connected{% endif %}</span>
+                  <span class="d-flex gap-2">
+                    <a class="btn btn-outline-primary btn-compact" href="{% url 'router_script' router.id %}">WinBox Script</a>
+                    <form method="post">
+                      {% csrf_token %}
+                      <input type="hidden" name="action" value="delete_router">
+                      <input type="hidden" name="router_id" value="{{ router.id }}">
+                      <button type="submit" class="btn btn-outline-danger btn-compact">Delete</button>
+                    </form>
+                  </span>
                 </li>
               {% endfor %}
             </ul>

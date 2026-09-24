@@ -1,0 +1,490 @@
+NETCORE ISP - COMPLETE ADMIN AND MIKROTIK CONNECTION GUIDE
+============================================================
+
+This guide explains the complete process from creating the web account to
+connecting a MikroTik router through WinBox.
+
+The complete connection flow is:
+
+    1. Start the Django web application.
+    2. Create the ISP/client admin account.
+    3. Log in to the web application.
+    4. Open Add MikroTik Router.
+    5. Register the router details.
+    6. Download the generated WinBox script.
+    7. Paste the script into MikroTik WinBox Terminal.
+    8. Wait for the router heartbeat.
+    9. Confirm that the router is Online.
+
+
+1. REQUIREMENTS
+---------------
+
+You need:
+
+- Python installed on the server or computer running Django.
+- The project virtual environment.
+- The Django dependencies from requirements.txt.
+- A MikroTik router.
+- WinBox installed on the computer used to configure the MikroTik.
+- The MikroTik must have outbound internet access.
+- The Django application must be reachable from the MikroTik over HTTPS.
+
+A public IP address on the MikroTik is NOT required. The router makes an
+outbound HTTPS connection to the Django application.
+
+
+2. USE THE REAL WEBSITE URL
+---------------------------
+
+The generated RouterOS script must contain the public URL of this web
+application. Set PUBLIC_BASE_URL in the project .env file.
+
+The live Netcore website is:
+
+    https://wifi.danatech.co.ke
+
+The production environment must contain:
+
+    PUBLIC_BASE_URL=https://wifi.danatech.co.ke
+
+Local testing example:
+
+    PUBLIC_BASE_URL=http://192.168.1.50:8000
+
+Use a real address that the MikroTik can reach. Do not use 127.0.0.1 or
+localhost in a script that will run on the MikroTik. Those addresses point to
+the MikroTik itself, not to the Django computer.
+
+After changing .env, restart Django.
+
+For production, HTTPS is required. The router sends its
+connection heartbeat to:
+
+    /routers/heartbeat/<router-token>/
+
+The token is generated automatically for each router.
+
+After changing PUBLIC_BASE_URL in the deployed web application, restart or
+redeploy the web application before downloading a new router script.
+
+
+3. MIKROTIK PORT LAYOUT FOR HOTSPOT
+------------------------------------
+
+The intended physical port layout is:
+
+    ether1       WAN / Internet input
+    ether2       Hotspot customer port
+    ether3       Hotspot customer port
+    ether4       Hotspot customer port
+    ether5       Hotspot customer port
+
+In simple terms, the internet cable goes into ether1. Customer access points,
+switches, or hotspot devices connect to ether2, ether3, ether4, and ether5.
+
+Do not paste port or bridge commands into a live router until you have made a
+backup. Existing MikroTik configurations may already use ether2-ether5 in a
+bridge. Replacing that configuration can disconnect customers.
+
+For a fresh router, configure ether2-ether5 as the hotspot LAN bridge and keep
+ether1 as WAN. Use WinBox to confirm the actual interface names first. If the
+router has more or fewer ports, use the ports that exist on that model.
+
+Recommended order:
+
+    1. Connect the internet cable to ether1.
+    2. Add ether2-ether5 to the hotspot/LAN bridge.
+    3. Run hotspot setup on the LAN bridge, not on ether1.
+    4. Configure DHCP, DNS, NAT, and the captive portal on the LAN bridge.
+    5. Test a customer device on ether2, ether3, ether4, and ether5.
+    6. Only then run the Netcore connection script.
+
+The Netcore connection script reports the router to the website. It does not
+replace the router's WAN, bridge, DHCP, NAT, or hotspot configuration.
+
+
+4. CONNECT THE INTERNET SOURCE AND LAPTOP
+------------------------------------------
+
+Use this physical wiring:
+
+    Internet source / ISP cable  ->  MikroTik ether1
+    MikroTik ether2              ->  Laptop Ethernet port
+
+You can use ether3, ether4, or ether5 instead of ether2 after those ports are
+part of the LAN/hotspot bridge.
+
+In WinBox, connect to the MikroTik by MAC address if it does not yet have an
+IP address. Then check the following:
+
+    IP -> DHCP Client
+
+There should be a DHCP client on ether1 if the ISP gives the MikroTik an IP
+automatically. The DHCP client should show a bound/active address.
+
+If the ISP gave you a static IP, configure the ISP address, gateway, and DNS
+values supplied by the ISP instead of using DHCP Client.
+
+For the laptop side, ether2-ether5 must be in the LAN or hotspot bridge. The
+bridge should have:
+
+    - A LAN gateway IP, for example 10.10.10.1/24
+    - A DHCP server for customer devices
+    - DNS enabled for LAN clients
+    - A source NAT masquerade rule out through ether1
+
+After connecting the laptop:
+
+    1. Set the laptop Ethernet adapter to obtain an IP automatically.
+    2. Wait for the laptop to receive a LAN IP from the MikroTik.
+    3. Open a browser and test an internet website.
+    4. If internet works, test the captive portal and hotspot profile.
+
+The laptop test is only a network test. A customer will see the captive
+portal only after HotSpot is configured on the LAN/hotspot bridge.
+
+For a new router, use WinBox Quick Set or Hotspot Setup to create the LAN,
+DHCP, DNS, NAT, and captive portal configuration. Do not run a new bridge or
+DHCP script over an existing live configuration unless you have a backup.
+
+After confirming the wiring, download the one all-in-one .rsc script from the
+router dashboard and paste it into WinBox Terminal. The script configures the
+basic network and registers the router at:
+
+    https://wifi.danatech.co.ke
+
+The one script configures:
+
+    - DHCP internet input on ether1
+    - netcore-hotspot bridge using ether2-ether5
+    - LAN gateway 10.10.10.1/24
+    - DHCP addresses from 10.10.10.10 to 10.10.10.254
+    - DNS requests for LAN clients
+    - NAT masquerade through ether1
+    - MikroTik HotSpot service on the customer bridge
+    - Netcore heartbeat and one-minute scheduler
+
+This all-in-one script assumes a fresh router and an ISP connection that gives
+ether1 an address by DHCP. Back up an existing router first. The script does
+not remove old rules, but an existing bridge, DHCP server, hotspot, or firewall
+can still conflict with the new setup.
+
+The MikroTik HotSpot service provides the network login interception. The
+customer plan and Daraja purchase pages remain on the website. To connect the
+MikroTik HotSpot login page to the website, upload the portal files or configure
+the HotSpot walled garden and redirect rules separately after the basic network
+is working.
+
+If the laptop receives no IP address, check that its cable is connected to
+ether2-ether5, that the port is in the LAN bridge, and that the DHCP server is
+running on that bridge.
+
+
+5. INSTALL AND START DJANGO
+---------------------------
+
+Open PowerShell in the project folder:
+
+    cd C:\Users\DANTEX3D\Desktop\django\netcore_project
+
+Activate the virtual environment:
+
+    .\venv\Scripts\Activate.ps1
+
+If PowerShell blocks activation, run this once in the same PowerShell window:
+
+    Set-ExecutionPolicy -Scope Process -ExecutionPolicy RemoteSigned
+
+Install dependencies:
+
+    pip install -r requirements.txt
+
+Apply database migrations:
+
+    python manage.py migrate
+
+Check the project:
+
+    python manage.py check
+
+Start the local server:
+
+    python manage.py runserver 0.0.0.0:8000
+
+Open the application in a browser:
+
+    http://127.0.0.1:8000/
+
+For a different device on the same LAN, use the Django computer's LAN IP:
+
+    http://192.168.1.50:8000/
+
+Replace 192.168.1.50 with the actual IP address of the Django computer.
+
+
+6. CREATE THE ADMIN / CLIENT ACCOUNT
+------------------------------------
+
+For the normal ISP/client dashboard:
+
+    http://127.0.0.1:8000/accounts/register/
+
+Complete the registration form and submit it.
+
+Then open the login page:
+
+    http://127.0.0.1:8000/accounts/login/
+
+Log in with the account created during registration.
+
+The main client dashboard is:
+
+    http://127.0.0.1:8000/dashboard/
+
+Important distinction:
+
+- The client account manages routers, plans, WiFi users, and billing.
+- A Django superuser is a separate system administrator account.
+- Create a Django superuser only when Django admin access is needed:
+
+      python manage.py createsuperuser
+
+Django admin is available at:
+
+    http://127.0.0.1:8000/admin/
+
+
+7. ADD A MIKROTIK ROUTER
+------------------------
+
+Open the router registration page:
+
+    http://127.0.0.1:8000/routers/register/
+
+Or use the Add Router button in the dashboard.
+
+Enter:
+
+- Router Name: a simple name without spaces, for example SHOP-ROUTER.
+- MikroTik Username: the username used to log in to WinBox.
+- MikroTik Password: the password used to log in to WinBox.
+- RouterOS Version: select Universal, RouterOS 7, or RouterOS 6.
+- Router has a public IP: enable only when the router truly has a public IP.
+
+The router IP address is not required for the heartbeat connection.
+
+Click:
+
+    Generate Script
+
+The router record is saved and you are returned to the router dashboard.
+
+
+8. DOWNLOAD THE WINBOX SCRIPT
+-----------------------------
+
+Open the router dashboard:
+
+    http://127.0.0.1:8000/routers/
+
+Find the router you just created.
+
+Click:
+
+    WinBox Script
+
+The browser downloads a file similar to:
+
+    SHOP-ROUTER-netcore.rsc
+
+Each router has a different connection token. Never share a router's script
+publicly because the token identifies that router to the application.
+
+
+9. RUN THE SCRIPT IN WINBOX
+---------------------------
+
+1. Open MikroTik WinBox.
+2. Connect to the correct MikroTik router.
+3. Open the Terminal window.
+4. Open the downloaded .rsc file with a text editor if necessary.
+5. Copy the entire script.
+6. Paste the entire script into WinBox Terminal.
+7. Press Enter and wait for the commands to finish.
+
+The script will:
+
+- Set the MikroTik identity to the router name.
+- Create a Netcore heartbeat script.
+- Create a Netcore heartbeat scheduler that runs every minute.
+- Send the first heartbeat immediately.
+- Send the router identity and serial number to the Django application.
+- Avoid deleting hotspot, PPPoE, firewall, or NAT rules.
+- Replace only old Netcore heartbeat entries if the script is run again.
+
+You should see this log message in WinBox:
+
+    Netcore ISP router connected
+
+
+10. VERIFY THE ROUTER CONNECTION
+--------------------------------
+
+Return to:
+
+    http://127.0.0.1:8000/routers/
+
+Refresh the page after a few seconds.
+
+A successful connection shows:
+
+- Status: Online
+- Last heartbeat time updated
+- IP address populated from the heartbeat request
+- Router listed only once
+
+The router may show Offline for a short time if the script has not run yet.
+The scheduler sends another heartbeat every minute.
+
+
+11. IF THE ROUTER STAYS OFFLINE
+-------------------------------
+
+Check these items in order:
+
+1. The MikroTik itself has internet access.
+2. The MikroTik can resolve the Django application's domain name.
+3. The MikroTik can make outbound HTTPS requests.
+4. PUBLIC_BASE_URL points to the correct reachable application URL.
+5. The generated script contains the correct URL.
+6. The script was pasted completely into WinBox Terminal.
+7. The router clock and date are reasonably correct.
+8. Firewall rules are not blocking outbound HTTPS.
+9. The application server is running.
+10. The application server is reachable from the router network.
+
+For local testing, a router cannot reach a Django server bound only to
+127.0.0.1. Start Django with:
+
+    python manage.py runserver 0.0.0.0:8000
+
+Then use the Django computer LAN IP in PUBLIC_BASE_URL.
+
+For production, use a public HTTPS domain and restart the application after
+changing the environment variable.
+
+
+12. ADD WIFI PLANS FOR CUSTOMERS
+--------------------------------
+
+From the client dashboard:
+
+    http://127.0.0.1:8000/dashboard/
+
+Add a WiFi plan with:
+
+- Plan name
+- Price
+- Duration
+- Duration unit
+- Device limit
+
+Customers see these plans in the captive portal checkout page:
+
+    http://127.0.0.1:8000/wifi/checkout/
+
+A dashboard plan can open the checkout page with that plan preselected.
+Customers enter their phone number, receive the Daraja M-Pesa prompt, and the
+payment callback creates the WiFi account after successful payment.
+
+
+13. CONFIGURE DARAJA BILLING
+----------------------------
+
+Open:
+
+    http://127.0.0.1:8000/dashboard/billing/
+
+Configure the payment destination:
+
+- Till number
+- PayBill number and account/reference
+- Bank account details
+
+Configure Daraja:
+
+- Environment: Sandbox or Production
+- Business shortcode
+- Consumer key
+- Consumer secret
+- Passkey
+- STK callback URL
+- C2B validation URL
+- C2B confirmation URL
+
+Save the settings before testing customer payments.
+
+The STK callback URL normally ends with:
+
+    /wifi/mpesa-callback/
+
+The callback URL must be publicly reachable by Safaricom. A localhost URL
+will not work for production callbacks.
+
+
+14. USEFUL URLS
+---------------
+
+Home:
+    /
+
+Register client:
+    /accounts/register/
+
+Login:
+    /accounts/login/
+
+Client dashboard:
+    /dashboard/
+
+Billing settings:
+    /dashboard/billing/
+
+Router dashboard:
+    /routers/
+
+Add router:
+    /routers/register/
+
+Customer WiFi login:
+    /wifi/login/
+
+Customer WiFi checkout:
+    /wifi/checkout/
+
+Django admin:
+    /admin/
+
+
+15. BASIC TEST COMMANDS
+-----------------------
+
+Run project checks:
+
+    python manage.py check
+
+Run all tests:
+
+    python manage.py test
+
+Run only router tests:
+
+    python manage.py test routers
+
+Run only client tests:
+
+    python manage.py test client
+
+
+END OF GUIDE

@@ -8,7 +8,7 @@ import random, string
 from routers.models import Router
 from .models import Package, Voucher, Receipt
 from accounts.models import Client
-from wifi.models import WifiUser
+from wifi.models import WifiUser, PppoeUser, RadiusSession
 
 
 def normalize_duration_minutes(value, unit=None):
@@ -72,9 +72,31 @@ def dashboard(request):
             sales=Count('id')
         ).order_by('-month')
     )
+    package_revenue = list(
+        receipts.filter(payment_status='completed').values('package__name').annotate(
+            amount=Sum('amount'), sales=Count('id')
+        ).order_by('-amount')[:6]
+    )
+    chart_max = max((float(item['amount'] or 0) for item in daily_summary[:10]), default=1)
+    revenue_chart = [
+        {
+            'label': item['day'].strftime('%d %b') if item['day'] else '-',
+            'amount': item['amount'] or 0,
+            'height': max(8, round(float(item['amount'] or 0) / chart_max * 100)),
+        }
+        for item in reversed(daily_summary[:10])
+    ]
 
     active_customers = [account for account in customer_accounts if account.is_active and account.expiry > timezone.now()]
     inactive_customers = [account for account in customer_accounts if not account.is_active or account.expiry <= timezone.now()]
+    pppoe_users = PppoeUser.objects.filter(client=client).select_related('package', 'router') if client else PppoeUser.objects.none()
+    radius_sessions = RadiusSession.objects.filter(client=client).select_related('router') if client else RadiusSession.objects.none()
+    online_pppoe = pppoe_users.filter(online=True, is_active=True).count()
+    online_radius = radius_sessions.filter(is_online=True).count()
+    revenue_total = receipts.filter(payment_status='completed').aggregate(total=Sum('amount')).get('total') or 0
+    revenue_today = receipts.filter(payment_status='completed', created_at__date=timezone.localdate()).aggregate(total=Sum('amount')).get('total') or 0
+    expiring_soon = customer_accounts.filter(expiry__lte=timezone.now() + timedelta(days=7), expiry__gt=timezone.now())
+    recent_transactions = receipts[:8]
 
     return render(request, 'client/dashboard.html', {
         'routers': routers,
@@ -94,6 +116,17 @@ def dashboard(request):
         'primary_color': getattr(client, 'primary_color', '#007bff') if client else '#007bff',
         'wifi_name': getattr(client, 'wifi_name', '') if client else '',
         'logo': getattr(client, 'logo', '') if client else '',
+        'pppoe_users': pppoe_users.order_by('-created_at')[:10],
+        'radius_sessions': radius_sessions,
+        'online_pppoe': online_pppoe,
+        'online_radius': online_radius,
+        'revenue_total': revenue_total,
+        'revenue_today': revenue_today,
+        'active_plans': packages.count(),
+        'recent_transactions': recent_transactions,
+        'expiring_soon': expiring_soon[:8],
+        'package_revenue': package_revenue,
+        'revenue_chart': revenue_chart,
     })
 
 @login_required(login_url='/accounts/login/')
@@ -105,18 +138,10 @@ def add_router(request):
             return redirect('/accounts/login/')
 
         name = request.POST.get('name', '').strip()
-        ip = request.POST.get('ip', '').strip()
-        api_username = request.POST.get('api_username', '').strip()
-        api_password = request.POST.get('api_password', '').strip()
-        if name and ip:
+        if name:
             Router.objects.create(
                 client=client,
                 name=name,
-                ip_address=ip,
-                api_username=api_username,
-                api_password=api_password,
-                latitude=0.0,
-                longitude=0.0,
                 status='offline'
             )
         return redirect('client_dashboard')
@@ -175,19 +200,43 @@ def client_update_package(request, package_id):
 
 
 @login_required(login_url='/accounts/login/')
-def client_update_payment_settings(request):
-    if request.method != 'POST':
-        return redirect('client_dashboard')
-
-    client = request.user.client
+def _save_payment_settings(client, request):
     client.mpesa_shortcode = (request.POST.get('mpesa_shortcode') or client.mpesa_shortcode or '174379').strip()
     client.mpesa_consumer_key = (request.POST.get('mpesa_consumer_key') or client.mpesa_consumer_key or '').strip()
     client.mpesa_consumer_secret = (request.POST.get('mpesa_consumer_secret') or client.mpesa_consumer_secret or '').strip()
     client.mpesa_passkey = (request.POST.get('mpesa_passkey') or client.mpesa_passkey or '').strip()
     client.mpesa_callback_url = (request.POST.get('mpesa_callback_url') or client.mpesa_callback_url or '').strip()
     client.mpesa_environment = (request.POST.get('mpesa_environment') or client.mpesa_environment or 'sandbox').strip()
+    client.billing_account_type = (request.POST.get('billing_account_type') or client.billing_account_type or 'till').strip()
+    client.till_number = request.POST.get('till_number', '').strip()
+    client.paybill_number = request.POST.get('paybill_number', '').strip()
+    client.paybill_account_number = request.POST.get('paybill_account_number', '').strip()
+    client.bank_name = request.POST.get('bank_name', '').strip()
+    client.bank_account_name = request.POST.get('bank_account_name', '').strip()
+    client.bank_account_number = request.POST.get('bank_account_number', '').strip()
+    client.bank_branch = request.POST.get('bank_branch', '').strip()
+    client.bank_swift_code = request.POST.get('bank_swift_code', '').strip()
+    client.mpesa_validation_url = request.POST.get('mpesa_validation_url', '').strip()
+    client.mpesa_confirmation_url = request.POST.get('mpesa_confirmation_url', '').strip()
     client.save()
+
+
+@login_required(login_url='/accounts/login/')
+def client_update_payment_settings(request):
+    if request.method != 'POST':
+        return redirect('client_dashboard')
+
+    _save_payment_settings(request.user.client, request)
     return redirect('client_dashboard')
+
+
+@login_required(login_url='/accounts/login/')
+def billing_settings(request):
+    client = request.user.client
+    if request.method == 'POST':
+        _save_payment_settings(client, request)
+        return redirect('billing_settings')
+    return render(request, 'client/billing.html', {'client': client})
 
 @login_required(login_url='/accounts/login/')
 def buy_package(request):

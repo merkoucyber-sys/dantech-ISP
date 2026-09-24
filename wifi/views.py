@@ -80,9 +80,11 @@ def wifi_checkout(request):
 
     packages = Package.objects.filter(client=client)
     
+    selected_package_id = request.GET.get('package')
     context = {
         'packages': packages,
         'client': client,
+        'selected_package_id': selected_package_id,
     }
     
     return render(request, 'wifi/checkout.html', context)

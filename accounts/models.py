@@ -24,6 +24,17 @@ class Client(models.Model):
     mpesa_passkey = models.CharField(max_length=255, blank=True, default="")
     mpesa_callback_url = models.URLField(blank=True, default="")
     mpesa_environment = models.CharField(max_length=20, default="sandbox")
+    billing_account_type = models.CharField(max_length=20, default="till")
+    till_number = models.CharField(max_length=30, blank=True, default="")
+    paybill_number = models.CharField(max_length=30, blank=True, default="")
+    paybill_account_number = models.CharField(max_length=100, blank=True, default="")
+    bank_name = models.CharField(max_length=100, blank=True, default="")
+    bank_account_name = models.CharField(max_length=150, blank=True, default="")
+    bank_account_number = models.CharField(max_length=100, blank=True, default="")
+    bank_branch = models.CharField(max_length=100, blank=True, default="")
+    bank_swift_code = models.CharField(max_length=30, blank=True, default="")
+    mpesa_validation_url = models.URLField(blank=True, default="")
+    mpesa_confirmation_url = models.URLField(blank=True, default="")
 
     def __str__(self):
         return self.name

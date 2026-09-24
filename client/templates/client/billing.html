@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Billing Settings</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+  <style>
+    body { background: #f4f7fb; color: #172554; }
+    .page { max-width: 1100px; margin: 32px auto; }
+    .panel { background: #fff; border: 1px solid #e2e8f0; border-radius: 14px; box-shadow: 0 8px 24px rgba(15, 23, 42, .06); }
+    .panel-header { border-bottom: 1px solid #e2e8f0; padding: 20px 24px; }
+    .panel-body { padding: 24px; }
+    .section-title { color: #4338ca; font-size: 14px; font-weight: 700; letter-spacing: .02em; text-transform: uppercase; }
+    .form-label { color: #334155; font-size: 13px; font-weight: 600; }
+    .form-control, .form-select { border-color: #cbd5e1; min-height: 42px; }
+    .hint { color: #64748b; font-size: 12px; }
+    .destination { display: none; }
+    .destination.active { display: block; }
+  </style>
+</head>
+<body>
+  <main class="page px-3">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+      <div>
+        <div class="text-uppercase text-secondary small">Admin / Billing</div>
+        <h1 class="h3 mb-1">Billing & Daraja API</h1>
+        <p class="text-secondary mb-0">Configure the payment account customers will use and your Safaricom API credentials.</p>
+      </div>
+      <a href="{% url 'client_dashboard' %}" class="btn btn-outline-secondary">Back to dashboard</a>
+    </div>
+
+    <form method="post" class="panel">
+      {% csrf_token %}
+      <div class="panel-header">
+        <div class="section-title">Payment destination</div>
+        <div class="row g-3 mt-1">
+          <div class="col-md-5">
+            <label class="form-label" for="billing_account_type">Account type</label>
+            <select class="form-select" id="billing_account_type" name="billing_account_type">
+              <option value="till" {% if client.billing_account_type == 'till' %}selected{% endif %}>Till number</option>
+              <option value="paybill" {% if client.billing_account_type == 'paybill' %}selected{% endif %}>PayBill</option>
+              <option value="bank" {% if client.billing_account_type == 'bank' %}selected{% endif %}>Bank account</option>
+            </select>
+          </div>
+          <div class="col-md-7 d-flex align-items-end">
+            <div class="hint">This destination is shown to customers and determines which details are used for manual payment instructions.</div>
+          </div>
+        </div>
+
+        <div id="destination-till" class="destination {% if client.billing_account_type == 'till' or not client.billing_account_type %}active{% endif %} mt-3">
+          <label class="form-label" for="till_number">Buy Goods Till number</label>
+          <input class="form-control" id="till_number" name="till_number" value="{{ client.till_number }}" placeholder="e.g. 123456">
+        </div>
+        <div id="destination-paybill" class="destination {% if client.billing_account_type == 'paybill' %}active{% endif %} mt-3">
+          <div class="row g-3">
+            <div class="col-md-6"><label class="form-label" for="paybill_number">PayBill number</label><input class="form-control" id="paybill_number" name="paybill_number" value="{{ client.paybill_number }}" placeholder="e.g. 174379"></div>
+            <div class="col-md-6"><label class="form-label" for="paybill_account_number">Account number / reference</label><input class="form-control" id="paybill_account_number" name="paybill_account_number" value="{{ client.paybill_account_number }}" placeholder="e.g. WIFI"></div>
+          </div>
+        </div>
+        <div id="destination-bank" class="destination {% if client.billing_account_type == 'bank' %}active{% endif %} mt-3">
+          <div class="row g-3">
+            <div class="col-md-6"><label class="form-label" for="bank_name">Bank name</label><input class="form-control" id="bank_name" name="bank_name" value="{{ client.bank_name }}"></div>
+            <div class="col-md-6"><label class="form-label" for="bank_account_name">Account name</label><input class="form-control" id="bank_account_name" name="bank_account_name" value="{{ client.bank_account_name }}"></div>
+            <div class="col-md-6"><label class="form-label" for="bank_account_number">Account number</label><input class="form-control" id="bank_account_number" name="bank_account_number" value="{{ client.bank_account_number }}"></div>
+            <div class="col-md-3"><label class="form-label" for="bank_branch">Branch</label><input class="form-control" id="bank_branch" name="bank_branch" value="{{ client.bank_branch }}"></div>
+            <div class="col-md-3"><label class="form-label" for="bank_swift_code">SWIFT code</label><input class="form-control" id="bank_swift_code" name="bank_swift_code" value="{{ client.bank_swift_code }}"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel-body">
+        <div class="section-title">Daraja API credentials</div>
+        <p class="hint mb-3">Use Sandbox while testing. Production STK Push requires a live shortcode and passkey issued by Safaricom.</p>
+        <div class="row g-3">
+          <div class="col-md-4"><label class="form-label" for="mpesa_environment">Environment</label><select class="form-select" id="mpesa_environment" name="mpesa_environment"><option value="sandbox" {% if client.mpesa_environment == 'sandbox' %}selected{% endif %}>Sandbox</option><option value="production" {% if client.mpesa_environment == 'production' %}selected{% endif %}>Production</option></select></div>
+          <div class="col-md-4"><label class="form-label" for="mpesa_shortcode">Business shortcode</label><input class="form-control" id="mpesa_shortcode" name="mpesa_shortcode" value="{{ client.mpesa_shortcode|default:'174379' }}"></div>
+          <div class="col-md-4"><label class="form-label" for="mpesa_passkey">Passkey</label><input class="form-control" type="password" id="mpesa_passkey" name="mpesa_passkey" value="{{ client.mpesa_passkey }}"></div>
+          <div class="col-md-6"><label class="form-label" for="mpesa_consumer_key">Consumer key</label><input class="form-control" id="mpesa_consumer_key" name="mpesa_consumer_key" value="{{ client.mpesa_consumer_key }}"></div>
+          <div class="col-md-6"><label class="form-label" for="mpesa_consumer_secret">Consumer secret</label><input class="form-control" type="password" id="mpesa_consumer_secret" name="mpesa_consumer_secret" value="{{ client.mpesa_consumer_secret }}"></div>
+          <div class="col-md-12"><label class="form-label" for="mpesa_callback_url">STK callback URL</label><input class="form-control" type="url" id="mpesa_callback_url" name="mpesa_callback_url" value="{{ client.mpesa_callback_url }}" placeholder="https://your-domain.com/wifi/mpesa-callback/"></div>
+          <div class="col-md-6"><label class="form-label" for="mpesa_validation_url">C2B validation URL</label><input class="form-control" type="url" id="mpesa_validation_url" name="mpesa_validation_url" value="{{ client.mpesa_validation_url }}" placeholder="https://your-domain.com/wifi/daraja/validation/"></div>
+          <div class="col-md-6"><label class="form-label" for="mpesa_confirmation_url">C2B confirmation URL</label><input class="form-control" type="url" id="mpesa_confirmation_url" name="mpesa_confirmation_url" value="{{ client.mpesa_confirmation_url }}" placeholder="https://your-domain.com/wifi/daraja/confirmation/"></div>
+        </div>
+        <div class="d-flex justify-content-between align-items-center mt-4">
+          <span class="hint">Credentials are stored against this client account and used by the payment service.</span>
+          <button class="btn btn-primary px-4" type="submit">Save billing settings</button>
+        </div>
+      </div>
+    </form>
+  </main>
+  <script>
+    const accountType = document.getElementById('billing_account_type');
+    const destinations = document.querySelectorAll('.destination');
+    function updateDestination() {
+      destinations.forEach((element) => element.classList.toggle('active', element.id === `destination-${accountType.value}`));
+    }
+    accountType.addEventListener('change', updateDestination);
+  </script>
+</body>
+</html>

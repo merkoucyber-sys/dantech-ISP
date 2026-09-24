@@ -3,42 +3,85 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Register Router</title>
+    <title>Add MikroTik Router</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <style>
+        body { background: #f4f7fb; color: #172554; }
+        .page { max-width: 980px; }
+        .panel { background: #fff; border: 1px solid #e2e8f0; border-radius: 14px; box-shadow: 0 8px 24px rgba(15, 23, 42, .06); }
+        .step { height: 34px; width: 34px; display: grid; place-items: center; border-radius: 50%; background: #4f35ff; color: #fff; font-weight: 700; }
+        .step-card { min-height: 142px; }
+        .muted { color: #64748b; font-size: 13px; }
+        label { font-weight: 600; font-size: 13px; }
+        input, select { width: 100%; border: 1px solid #cbd5e1; border-radius: 8px; padding: 10px 12px; }
+        .form-check input { width: auto; }
+    </style>
 </head>
 <body>
-<div class="container mt-5">
-    <h1>Register Router</h1>
-    <p>Use this form to add a new router to your account.</p>
+<div class="container page py-4 py-md-5">
+    <div class="d-flex justify-content-between align-items-start gap-3 mb-4">
+        <div>
+            <div class="text-uppercase text-secondary small">Network / Routers</div>
+            <h1 class="mb-2">Connect a MikroTik router</h1>
+            <p class="muted mb-0">Add the router, run one script in WinBox, then wait for the green Online status.</p>
+        </div>
+        <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary">Router dashboard</a>
+    </div>
+
+    <section class="panel p-4 mb-4">
+        <h2 class="h5 mb-2">How to connect your router</h2>
+        <div class="alert alert-primary mb-3"><strong>Simple idea:</strong> this website gives your MikroTik one script. You paste it into WinBox. The router then calls this website every minute to show that it is connected.</div>
+        <div class="border-start border-4 border-success bg-light rounded p-3 mb-3">
+            <strong>What you need:</strong>
+            <span class="muted"> A MikroTik router, WinBox access, the router login details, and internet access from the router.</span>
+        </div>
+        <div class="row g-3">
+            <div class="col-md-4"><div class="step-card border rounded-3 p-3"><div class="step mb-3">1</div><strong>Fill in this form</strong><p class="muted mb-0 mt-2">Use the same username and password you use to log in with WinBox.</p></div></div>
+            <div class="col-md-4"><div class="step-card border rounded-3 p-3"><div class="step mb-3">2</div><strong>Click Generate Script</strong><p class="muted mb-0 mt-2">The router will be created. On the next page, download its WinBox Script.</p></div></div>
+            <div class="col-md-4"><div class="step-card border rounded-3 p-3"><div class="step mb-3">3</div><strong>Paste in WinBox</strong><p class="muted mb-0 mt-2">Open WinBox, connect to the router, open Terminal, and paste the whole script.</p></div></div>
+            <div class="col-md-4"><div class="step-card border rounded-3 p-3"><div class="step mb-3">4</div><strong>Keep internet working</strong><p class="muted mb-0 mt-2">The router needs outbound internet access. A public IP is not needed.</p></div></div>
+            <div class="col-md-4"><div class="step-card border rounded-3 p-3"><div class="step mb-3">5</div><strong>Wait one minute</strong><p class="muted mb-0 mt-2">The first connection happens immediately. The router checks again every minute.</p></div></div>
+            <div class="col-md-4"><div class="step-card border rounded-3 p-3"><div class="step mb-3">6</div><strong>Look for Online</strong><p class="muted mb-0 mt-2">Return to Routers and refresh. Green Online means the connection works.</p></div></div>
+        </div>
+        <div class="alert alert-warning mt-3 mb-0"><strong>If it stays Offline:</strong> check router internet access, the public application URL, and the WinBox Terminal log.</div>
+    </section>
+
+    <section class="panel p-4">
+    <h2 class="h5 mb-1">Router details</h2>
+    <p class="muted">These details are used to generate the RouterOS configuration script.</p>
     <form method="post" novalidate>
         {% csrf_token %}
         <div class="mb-3">
             {{ form.name.label_tag }}
             {{ form.name }}
+            {{ form.name.errors }}
         </div>
-        <div class="mb-3">
-            {{ form.ip_address.label_tag }}
-            {{ form.ip_address }}
+        <div class="row g-3">
+            <div class="col-md-6">
+                {{ form.api_username.label_tag }}
+                {{ form.api_username }}
+                {{ form.api_username.errors }}
+            </div>
+            <div class="col-md-6">
+                {{ form.api_password.label_tag }}
+                {{ form.api_password }}
+                {{ form.api_password.errors }}
+            </div>
         </div>
-        <div class="mb-3">
-            {{ form.api_username.label_tag }}
-            {{ form.api_username }}
+        <div class="mb-3 mt-3">
+            {{ form.router_os_version.label_tag }}
+            {{ form.router_os_version }}
+            {{ form.router_os_version.errors }}
         </div>
-        <div class="mb-3">
-            {{ form.api_password.label_tag }}
-            {{ form.api_password }}
+        <div class="form-check mb-3">
+            {{ form.has_public_ip }}
+            {{ form.has_public_ip.label_tag }}
         </div>
-        <div class="mb-3">
-            {{ form.latitude.label_tag }}
-            {{ form.latitude }}
-        </div>
-        <div class="mb-3">
-            {{ form.longitude.label_tag }}
-            {{ form.longitude }}
-        </div>
-        <button type="submit" class="btn btn-primary">Register Router</button>
-        <a href="/routers/" class="btn btn-secondary ms-2">Back to Router Dashboard</a>
+        <div class="alert alert-info">If the router has no public IP, the generated script uses the outbound heartbeat connection. No router IP is required here.</div>
+        <button type="submit" class="btn btn-primary">Generate Script</button>
+        <a href="{% url 'dashboard' %}" class="btn btn-secondary ms-2">Cancel</a>
     </form>
+    </section>
 </div>
 </body>
 </html>

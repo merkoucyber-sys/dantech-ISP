@@ -8,6 +8,7 @@ urlpatterns = [
     path('edit_package/<int:package_id>/', views.client_update_package, name='client_update_package'),
     path('update_business/', views.client_update_business, name='client_update_business'),
     path('update_payment_settings/', views.client_update_payment_settings, name='client_update_payment_settings'),
+    path('billing/', views.billing_settings, name='billing_settings'),
     path('buy_package/', views.buy_package, name='buy_package'),
     path('generate_voucher/', views.generate_voucher, name='generate_voucher'),
     path('reactivate_customer/', views.reactivate_customer, name='reactivate_customer'),
